@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sample EC Site — Product</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Sample EC</a>
+    <nav>
+      <a href="/">Products</a>
+      <a href="/cart.html">Cart<span class="cart-badge" id="cart-badge">0</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <p><a href="/">&larr; Back to products</a></p>
+    <div id="status" class="muted">Loading…</div>
+    <div class="detail" id="detail" hidden></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/cart.js"></script>
+  <script>
+    function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
+    function refreshBadge() { document.getElementById('cart-badge').textContent = Cart.count(); }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1400);
+    }
+    function getId() { return new URLSearchParams(location.search).get('id'); }
+
+    (async function init() {
+      refreshBadge();
+      const status = document.getElementById('status');
+      const detail = document.getElementById('detail');
+      const id = getId();
+      if (!id) { status.textContent = 'No product selected.'; status.className = 'notice'; return; }
+      try {
+        const p = await Api.fetchProduct(id);
+        if (!p) { status.textContent = 'Product not found.'; status.className = 'notice'; return; }
+        document.title = 'Sample EC Site — ' + p.name;
+        detail.innerHTML =
+          '<img src="' + p.image + '" alt="' + p.name + '" />' +
+          '<div>' +
+          '<h1>' + p.name + '</h1>' +
+          '<div class="price">' + fmtPrice(p.price) + '</div>' +
+          '<p class="desc">' + p.description + '</p>' +
+          '<div class="row-gap">' +
+          '<label for="qty">Qty</label>' +
+          '<input id="qty" class="qty" type="number" min="1" value="1" style="width:72px" />' +
+          '<button id="add">Add to cart</button>' +
+          '</div></div>';
+        status.hidden = true; detail.hidden = false;
+        document.getElementById('add').addEventListener('click', () => {
+          const qty = parseInt(document.getElementById('qty').value, 10) || 1;
+          Cart.add(p, qty); refreshBadge(); showToast(p.name + ' added to cart');
+        });
+      } catch (e) {
+        status.textContent = 'Could not load this product.'; status.className = 'notice';
+      }
+    })();
+  </script>
+</body>
+</html>

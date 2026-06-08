@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sample EC Site — Cart</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Sample EC</a>
+    <nav>
+      <a href="/">Products</a>
+      <a href="/cart.html">Cart<span class="cart-badge" id="cart-badge">0</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Your Cart</h1>
+    <div id="empty" class="empty-state" hidden>
+      Your cart is empty. <a href="/">Browse products</a>.
+    </div>
+    <div id="filled" hidden>
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="num">Unit price</th>
+            <th>Quantity</th>
+            <th class="num">Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="cart-total">Total: <span id="total">$0.00</span></div>
+      <div class="row-gap" style="justify-content:flex-end">
+        <a class="btn secondary" href="/">Continue shopping</a>
+        <a class="btn" id="checkout-link" href="/checkout.html">Proceed to checkout</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/cart.js"></script>
+  <script>
+    function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
+    function refreshBadge() { document.getElementById('cart-badge').textContent = Cart.count(); }
+
+    function render() {
+      refreshBadge();
+      const empty = document.getElementById('empty');
+      const filled = document.getElementById('filled');
+      const items = Cart.lineItems();
+
+      if (items.length === 0) {
+        // FR-17: nothing to check out — show empty state, hide checkout.
+        empty.hidden = false; filled.hidden = true;
+        return;
+      }
+      empty.hidden = true; filled.hidden = false;
+
+      const rows = document.getElementById('rows');
+      rows.innerHTML = '';
+      items.forEach((it) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + it.name + '</td>' +
+          '<td class="num">' + fmtPrice(it.unitPrice) + '</td>' +
+          '<td><input class="qty" type="number" min="1" value="' + it.quantity + '" data-qty="' + it.id + '" /></td>' +
+          '<td class="num">' + fmtPrice(it.subtotal) + '</td>' +
+          '<td><button class="danger" data-remove="' + it.id + '">Remove</button></td>';
+        rows.appendChild(tr);
+      });
+      document.getElementById('total').textContent = fmtPrice(Cart.total());
+
+      // FR-7: change quantity.
+      rows.querySelectorAll('[data-qty]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const qty = parseInt(input.value, 10);
+          Cart.setQuantity(input.getAttribute('data-qty'), qty);
+          render();
+        });
+      });
+      // FR-8: remove item.
+      rows.querySelectorAll('[data-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          Cart.remove(btn.getAttribute('data-remove'));
+          render();
+        });
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

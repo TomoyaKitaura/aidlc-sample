@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" role="img" aria-label="Product image placeholder">
+  <rect width="400" height="300" fill="#eef1f5"/>
+  <rect x="0.5" y="0.5" width="399" height="299" fill="none" stroke="#cfd6e0"/>
+  <g fill="#9aa6b6">
+    <circle cx="140" cy="120" r="28"/>
+    <path d="M70 230 L165 140 L230 200 L275 165 L340 230 Z"/>
+  </g>
+  <text x="200" y="270" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="#7a8699">Sample product</text>
+</svg>

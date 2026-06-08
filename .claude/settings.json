@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/aidlc-common/scripts/aidlc-subagent-posthook.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

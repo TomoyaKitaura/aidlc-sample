@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sample EC Site — Checkout</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Sample EC</a>
+    <nav>
+      <a href="/">Products</a>
+      <a href="/cart.html">Cart<span class="cart-badge" id="cart-badge">0</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Empty-cart block (FR-17) -->
+    <div id="empty" class="notice" hidden>
+      Your cart is empty, so there is nothing to order. <a href="/">Browse products</a>.
+    </div>
+
+    <!-- Guest checkout form (FR-11, FR-12) -->
+    <div id="checkout" hidden>
+      <h1>Checkout</h1>
+      <p class="muted">Guest checkout — no account needed. This is a simulated order; no payment is taken.</p>
+      <div id="form-error" class="notice" hidden></div>
+      <form class="checkout" id="order-form" novalidate>
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" required />
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required />
+        <label for="address">Shipping address</label>
+        <textarea id="address" name="address" rows="3" required></textarea>
+        <div class="cart-total" style="text-align:left">Order total: <span id="total">$0.00</span></div>
+        <button id="place" type="submit">Place order</button>
+      </form>
+    </div>
+
+    <!-- Confirmation (FR-15) -->
+    <div id="confirmation" class="confirmation" hidden>
+      <h1>Thank you — your order is confirmed</h1>
+      <p>Order ID: <span class="order-id" id="order-id"></span></p>
+      <h2>Ordered items</h2>
+      <table class="cart-table">
+        <thead>
+          <tr><th>Product</th><th class="num">Unit price</th><th>Qty</th><th class="num">Subtotal</th></tr>
+        </thead>
+        <tbody id="conf-rows"></tbody>
+      </table>
+      <div class="cart-total">Total: <span id="conf-total">$0.00</span></div>
+      <p><a class="btn" href="/">Back to products</a></p>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/cart.js"></script>
+  <script>
+    function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
+    function refreshBadge() { document.getElementById('cart-badge').textContent = Cart.count(); }
+
+    const emptyEl = document.getElementById('empty');
+    const checkoutEl = document.getElementById('checkout');
+    const confEl = document.getElementById('confirmation');
+
+    function init() {
+      refreshBadge();
+      // FR-17: block checkout when the cart is empty.
+      if (Cart.isEmpty()) {
+        emptyEl.hidden = false; checkoutEl.hidden = true; confEl.hidden = true;
+        return;
+      }
+      emptyEl.hidden = true; checkoutEl.hidden = false; confEl.hidden = true;
+      document.getElementById('total').textContent = fmtPrice(Cart.total());
+    }
+
+    function showError(msg) {
+      const e = document.getElementById('form-error');
+      e.textContent = msg; e.hidden = false;
+    }
+
+    function renderConfirmation(order) {
+      document.getElementById('order-id').textContent = order.orderId;
+      const rows = document.getElementById('conf-rows');
+      rows.innerHTML = '';
+      order.items.forEach((it) => {
+        const tr = document.createElement('tr');
+        const sub = Number(it.unitPrice * it.quantity).toFixed(2);
+        tr.innerHTML =
+          '<td>' + it.name + '</td>' +
+          '<td class="num">' + fmtPrice(it.unitPrice) + '</td>' +
+          '<td>' + it.quantity + '</td>' +
+          '<td class="num">$' + sub + '</td>';
+        rows.appendChild(tr);
+      });
+      document.getElementById('conf-total').textContent = fmtPrice(order.total);
+      checkoutEl.hidden = true; emptyEl.hidden = true; confEl.hidden = false;
+    }
+
+    document.getElementById('order-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      document.getElementById('form-error').hidden = true;
+
+      // Re-check empty cart at submit time (FR-17).
+      if (Cart.isEmpty()) { init(); return; }
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const address = document.getElementById('address').value.trim();
+      if (!name || !email || !address) {
+        showError('Please fill in your name, email, and shipping address.');
+        return;
+      }
+
+      const btn = document.getElementById('place');
+      btn.disabled = true; btn.textContent = 'Placing order…';
+      try {
+        const order = await Api.placeOrder({
+          customer: { name, email, address },
+          items: Cart.read(),
+        });
+        Cart.clear();          // FR-16: empty the cart after a successful order.
+        refreshBadge();
+        renderConfirmation(order);  // FR-15: show order ID + items.
+      } catch (e) {
+        showError(e.message || 'Could not place the order. Please try again.');
+        btn.disabled = false; btn.textContent = 'Place order';
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "workflow": [
+    {
+      "skill": "requirements-analysis",
+      "phase": "inception",
+      "unit": null,
+      "scope": null
+    },
+    {
+      "skill": "code-generation",
+      "phase": "construction",
+      "unit": "sample-ec-site",
+      "scope": null
+    },
+    {
+      "skill": "build-and-test",
+      "phase": "construction",
+      "unit": null,
+      "scope": null
+    }
+  ],
+  "intentDir": "org-ai-kb/aidlc-docs/intent-001-sample-ec-site",
+  "rulesDir": "rules",
+  "current": {
+    "skill": "build-and-test",
+    "phase": "construction",
+    "unit": null,
+    "scope": null,
+    "step": "skill-complete",
+    "status": "verified"
+  },
+  "next": {
+    "step": "clarification"
+  },
+  "error": null
+}

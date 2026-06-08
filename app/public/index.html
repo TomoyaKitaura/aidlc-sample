@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sample EC Site — Products</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Sample EC</a>
+    <nav>
+      <a href="/">Products</a>
+      <a href="/cart.html">Cart<span class="cart-badge" id="cart-badge">0</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Products</h1>
+    <div id="status" class="muted">Loading products…</div>
+    <div class="product-grid" id="grid" hidden></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/cart.js"></script>
+  <script>
+    function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
+    function refreshBadge() { document.getElementById('cart-badge').textContent = Cart.count(); }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 1400);
+    }
+
+    function card(p) {
+      const el = document.createElement('div');
+      el.className = 'product-card';
+      el.innerHTML =
+        '<a href="/product.html?id=' + encodeURIComponent(p.id) + '">' +
+        '<img src="' + p.image + '" alt="' + p.name + '" /></a>' +
+        '<div class="body">' +
+        '<a class="name" href="/product.html?id=' + encodeURIComponent(p.id) + '">' + p.name + '</a>' +
+        '<div class="price">' + fmtPrice(p.price) + '</div>' +
+        '<div class="desc">' + p.description + '</div>' +
+        '<div class="actions">' +
+        '<a class="btn secondary" href="/product.html?id=' + encodeURIComponent(p.id) + '">Details</a>' +
+        '<button data-add>Add to cart</button>' +
+        '</div></div>';
+      el.querySelector('[data-add]').addEventListener('click', () => {
+        Cart.add(p, 1); refreshBadge(); showToast(p.name + ' added to cart');
+      });
+      return el;
+    }
+
+    (async function init() {
+      refreshBadge();
+      const grid = document.getElementById('grid');
+      const status = document.getElementById('status');
+      try {
+        const products = await Api.fetchProducts();
+        products.forEach((p) => grid.appendChild(card(p)));
+        status.hidden = true; grid.hidden = false;
+      } catch (e) {
+        status.textContent = 'Could not load products. Is the server running?';
+        status.className = 'notice';
+      }
+    })();
+  </script>
+</body>
+</html>
