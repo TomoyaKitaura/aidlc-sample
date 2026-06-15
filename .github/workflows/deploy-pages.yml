@@ -1,0 +1,63 @@
+# Build the static site and publish it to GitHub Pages.
+# intent-002-static-frontend-github-pages-ci, unit: static-frontend.
+# FR-8, FR-9, FR-10; NFR-1; TD-2, TD-5, TD-6, TD-7. Deploy only runs when the
+# build succeeds (deploy `needs: build`), so a failed build publishes nothing
+# and the last good deployment is retained (FR-9, NFR-1).
+name: Deploy static site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege at the workflow level (TD-6): read-only by default.
+permissions:
+  contents: read
+
+# Serialize Pages publishes; do not cancel an in-flight deployment (TD-6).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Build static site (generate products.json, assemble dist/)
+        working-directory: app
+        run: npm run build
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact (app/dist only)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Elevated permissions scoped to the deploy job only (TD-6).
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

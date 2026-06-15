@@ -1,0 +1,54 @@
+{
+  "workflow": [
+    {
+      "skill": "requirements-analysis",
+      "phase": "inception",
+      "unit": null,
+      "scope": null
+    },
+    {
+      "skill": "application-design",
+      "phase": "inception",
+      "unit": null,
+      "scope": null
+    },
+    {
+      "skill": "functional-design",
+      "phase": "construction",
+      "unit": "static-frontend",
+      "scope": null
+    },
+    {
+      "skill": "infrastructure-design",
+      "phase": "construction",
+      "unit": "static-frontend",
+      "scope": null
+    },
+    {
+      "skill": "code-generation",
+      "phase": "construction",
+      "unit": "static-frontend",
+      "scope": null
+    },
+    {
+      "skill": "build-and-test",
+      "phase": "construction",
+      "unit": null,
+      "scope": null
+    }
+  ],
+  "intentDir": "org-ai-kb/aidlc-docs/intent-002-static-frontend-github-pages-ci",
+  "rulesDir": "rules",
+  "current": {
+    "skill": "code-generation",
+    "phase": "construction",
+    "unit": "static-frontend",
+    "scope": null,
+    "step": "validation",
+    "status": "verified"
+  },
+  "next": {
+    "step": "verification"
+  },
+  "error": null
+}
