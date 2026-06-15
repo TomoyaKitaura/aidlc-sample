@@ -41,3 +41,6 @@ If the cart is empty, the place-order action is blocked (FR-17).
   persisted** — they exist only for the lifetime of the confirmation and are not
   retrievable later.
 - The backend is stateless apart from minting an order ID at checkout.
+
+## テスト
+追記
