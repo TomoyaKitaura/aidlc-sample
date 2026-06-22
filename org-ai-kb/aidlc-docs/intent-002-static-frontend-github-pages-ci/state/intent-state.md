@@ -19,4 +19,5 @@ updated: 2026-06-15T21:00:00+0900
 | application-design | — | complete | 1 | application-design-questions.md, application-design-plan.md, components.md, component-methods.md, component-dependencies.md, services.md, cross-cutting.md, application-design-validation-result.md |
 | functional-design:static-frontend | — | complete | 1 | functional-design-questions.md, functional-design-plan.md, business-logic-model.md, domain-entities.md, business-rules.md, functional-design-validation-result.md |
 | infrastructure-design:static-frontend | — | complete | 1 | infrastructure-design-questions.md, infrastructure-design-plan.md, infrastructure-design.md, deployment-architecture.md, infrastructure-design-validation-result.md |
-| code-generation:static-frontend | validation | pass | 1 | code-generation-plan.md, code-generation-questions.md, CODE_SUMMARY.md, code-generation-validation-result.md |
+| code-generation:static-frontend | — | complete | 1 | code-generation-plan.md, code-generation-questions.md, CODE_SUMMARY.md, code-generation-validation-result.md |
+| build-and-test | — | complete | 1 | — (skill unimplemented 🚧; covered by substitution — see audit/workflow-rationale) |

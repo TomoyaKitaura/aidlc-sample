@@ -40,15 +40,15 @@
   "intentDir": "org-ai-kb/aidlc-docs/intent-002-static-frontend-github-pages-ci",
   "rulesDir": "rules",
   "current": {
-    "skill": "code-generation",
+    "skill": "build-and-test",
     "phase": "construction",
-    "unit": "static-frontend",
+    "unit": null,
     "scope": null,
-    "step": "validation",
+    "step": "skill-complete",
     "status": "verified"
   },
   "next": {
-    "step": "verification"
+    "step": "clarification"
   },
   "error": null
 }
