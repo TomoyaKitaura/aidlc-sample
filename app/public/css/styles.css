@@ -141,3 +141,39 @@ form.checkout input, form.checkout textarea {
 .confirmation .order-id { font-family: ui-monospace, monospace; font-weight: 700; }
 .muted { color: var(--muted); }
 .row-gap { display: flex; gap: 10px; align-items: center; }
+
+/* Filter bar (intent-003-product-search-filter, unit: product-listing).
+ * Additive only — reuses existing tokens (--card, --line, --radius) and the
+ * shared input treatment; no existing rule is altered. The Search button
+ * reuses the default button/.btn; Clear reuses button.secondary; the
+ * zero-match message reuses the existing .empty-state. (FR-3, NFR-1; Q4.) */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 0 0 18px;
+}
+.filter-bar .search {
+  flex: 1 1 220px;
+  min-width: 160px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+}
+.filter-bar .price {
+  width: 110px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+}
+@media (max-width: 720px) {
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar .price { width: 100%; }
+}

@@ -17,13 +17,31 @@
 
   <main>
     <h1>Products</h1>
+
+    <!-- Search + price filter bar (intent-003). Explicit submit only; Clear
+         hidden until a control is active (FR-5, FR-8). -->
+    <form class="filter-bar" id="filter-bar">
+      <input class="search" id="search-term" type="search"
+             placeholder="Search products by name"
+             aria-label="Search products by name" />
+      <input class="price" id="min-price" type="number" min="0" step="0.01"
+             placeholder="Min price" aria-label="Minimum price" />
+      <input class="price" id="max-price" type="number" min="0" step="0.01"
+             placeholder="Max price" aria-label="Maximum price" />
+      <button type="submit">Search</button>
+      <button type="button" class="secondary" id="clear-filters" hidden
+              aria-label="Clear search and price filters">Clear &times;</button>
+    </form>
+
     <div id="status" class="muted">Loading products…</div>
+    <div class="empty-state" id="empty" hidden>No products match your search.</div>
     <div class="product-grid" id="grid" hidden></div>
   </main>
 
   <div class="toast" id="toast"></div>
 
   <script src="/js/api.js"></script>
+  <script src="/js/search-filter.js"></script>
   <script src="/js/cart.js"></script>
   <script>
     function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
@@ -34,38 +52,152 @@
       setTimeout(() => t.classList.remove('show'), 1400);
     }
 
+    // Build a product card via DOM APIs only: name/price/description are set as
+    // textContent and img.src/href via element properties, so product data
+    // (and any echoed search term, which is never interpolated here) is inert
+    // text and never parsed as markup (FR-10, BR-12).
     function card(p) {
+      const href = '/product.html?id=' + encodeURIComponent(p.id);
+
       const el = document.createElement('div');
       el.className = 'product-card';
-      el.innerHTML =
-        '<a href="/product.html?id=' + encodeURIComponent(p.id) + '">' +
-        '<img src="' + p.image + '" alt="' + p.name + '" /></a>' +
-        '<div class="body">' +
-        '<a class="name" href="/product.html?id=' + encodeURIComponent(p.id) + '">' + p.name + '</a>' +
-        '<div class="price">' + fmtPrice(p.price) + '</div>' +
-        '<div class="desc">' + p.description + '</div>' +
-        '<div class="actions">' +
-        '<a class="btn secondary" href="/product.html?id=' + encodeURIComponent(p.id) + '">Details</a>' +
-        '<button data-add>Add to cart</button>' +
-        '</div></div>';
-      el.querySelector('[data-add]').addEventListener('click', () => {
+
+      const imgLink = document.createElement('a');
+      imgLink.href = href;
+      const img = document.createElement('img');
+      img.src = p.image;
+      img.alt = p.name;
+      imgLink.appendChild(img);
+
+      const body = document.createElement('div');
+      body.className = 'body';
+
+      const nameLink = document.createElement('a');
+      nameLink.className = 'name';
+      nameLink.href = href;
+      nameLink.textContent = p.name;
+
+      const price = document.createElement('div');
+      price.className = 'price';
+      price.textContent = fmtPrice(p.price);
+
+      const desc = document.createElement('div');
+      desc.className = 'desc';
+      desc.textContent = p.description;
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const details = document.createElement('a');
+      details.className = 'btn secondary';
+      details.href = href;
+      details.textContent = 'Details';
+
+      const add = document.createElement('button');
+      add.setAttribute('data-add', '');
+      add.textContent = 'Add to cart';
+      add.addEventListener('click', () => {
         Cart.add(p, 1); refreshBadge(); showToast(p.name + ' added to cart');
       });
+
+      actions.appendChild(details);
+      actions.appendChild(add);
+      body.appendChild(nameLink);
+      body.appendChild(price);
+      body.appendChild(desc);
+      body.appendChild(actions);
+      el.appendChild(imgLink);
+      el.appendChild(body);
       return el;
     }
 
-    (async function init() {
+    (function init() {
       refreshBadge();
+
+      const form = document.getElementById('filter-bar');
+      const searchEl = document.getElementById('search-term');
+      const minEl = document.getElementById('min-price');
+      const maxEl = document.getElementById('max-price');
+      const clearBtn = document.getElementById('clear-filters');
       const grid = document.getElementById('grid');
       const status = document.getElementById('status');
-      try {
-        const products = await Api.fetchProducts();
+      const empty = document.getElementById('empty');
+
+      let catalogue = [];
+
+      // Render a derived result set: clear the grid, then either show the
+      // distinct empty-state (zero matches, FR-7/BR-8 — separate from the
+      // .notice load error) or the product grid in catalogue order.
+      function render(products) {
+        grid.replaceChildren();
+        if (products.length === 0) {
+          grid.hidden = true;
+          empty.hidden = false;
+          return;
+        }
+        empty.hidden = true;
         products.forEach((p) => grid.appendChild(card(p)));
-        status.hidden = true; grid.hidden = false;
-      } catch (e) {
-        status.textContent = 'Could not load products. Is the server running?';
-        status.className = 'notice';
+        grid.hidden = false;
       }
+
+      // Whether any live control is non-empty (BR-10).
+      function anyControlActive() {
+        return searchEl.value.trim() !== ''
+          || minEl.value.trim() !== ''
+          || maxEl.value.trim() !== '';
+      }
+
+      // Toggle Clear visibility from the live control state. Visibility only —
+      // does NOT apply the filter (BR-9/BR-10).
+      function syncClearVisibility() {
+        clearBtn.hidden = !anyControlActive();
+      }
+
+      // Snapshot the live controls into applied criteria and re-render
+      // (W-1, explicit submit; BR-1/BR-3/BR-6).
+      function applyFilter() {
+        const criteria = SearchFilter.normaliseCriteria({
+          searchTerm: searchEl.value,
+          minPrice: minEl.value,
+          maxPrice: maxEl.value,
+        });
+        render(SearchFilter.filterCatalogue(catalogue, criteria));
+      }
+
+      // Explicit submit only (Search click or Enter) — no as-you-type (FR-5/BR-9).
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        applyFilter();
+      });
+
+      // Clear resets all controls, restores the full catalogue, hides itself
+      // (W-2; BR-7/BR-10). No persistence is touched (BR-11).
+      clearBtn.addEventListener('click', () => {
+        searchEl.value = '';
+        minEl.value = '';
+        maxEl.value = '';
+        syncClearVisibility();
+        render(catalogue);
+      });
+
+      // Live control edits only toggle Clear visibility; they never re-filter.
+      [searchEl, minEl, maxEl].forEach((el) => {
+        el.addEventListener('input', syncClearVisibility);
+      });
+
+      // Initial load (W-3): controls start empty, no URL/storage read (BR-11),
+      // initial render is the full catalogue (BR-7/FR-6).
+      Api.fetchProducts()
+        .then((products) => {
+          catalogue = products;
+          status.hidden = true;
+          syncClearVisibility();
+          render(catalogue);
+        })
+        .catch(() => {
+          status.textContent = 'Could not load products. Is the server running?';
+          status.className = 'notice';
+        });
     })();
   </script>
 </body>
